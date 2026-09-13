@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#0a0d12" />
-    <title>AR 가벽 배치</title>
+    <title>AR 바닥 인식 테스트</title>
     <!-- This product includes the XR Engine software developed by Niantic Spatial, Inc.
          Copyright © 2026 Niantic Spatial, Inc. All rights reserved.
          License: https://github.com/8thwall/engine/blob/main/LICENSE -->
@@ -20,10 +20,10 @@
     <canvas id="camerafeed" aria-label="AR 카메라 화면"></canvas>
     <main id="app">
       <section id="intro" class="panel" aria-labelledby="intro-title">
-        <p class="eyebrow">ABSOLUTE SCALE AR</p>
-        <h1 id="intro-title">실물 크기로<br />가벽을 놓아보세요</h1>
-        <p class="intro-copy">카메라로 바닥을 비춘 뒤 한 번 터치하면 1.5 × 2.3m 가벽이 공간에 고정됩니다.</p>
-        <button id="start-button" type="button">AR 시작</button>
+        <p class="eyebrow">FLOOR TRACKING TEST</p>
+        <h1 id="intro-title">바닥 인식부터<br />정확하게 확인합니다</h1>
+        <p class="intro-copy">카메라로 바닥을 비추며 천천히 움직이세요. 흐린 원이 초록색으로 바뀌면 바닥 인식이 완료된 것입니다.</p>
+        <button id="start-button" type="button">바닥 인식 시작</button>
         <p class="privacy-note">카메라 영상은 기기에서만 처리됩니다.</p>
       </section>
 
@@ -34,7 +34,7 @@
 
       <div id="reticle" aria-hidden="true" hidden><span></span></div>
 
-      <button id="replace-button" class="secondary-button" type="button" hidden>다시 배치</button>
+      <button id="replace-button" class="secondary-button" type="button" hidden>다시 인식</button>
 
       <section id="error-panel" class="panel error-panel" role="alert" hidden>
         <p class="eyebrow">AR을 시작할 수 없습니다</p>

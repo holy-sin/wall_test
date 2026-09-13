@@ -165,16 +165,19 @@ button:disabled { opacity: 0.55; }
 .status-icon.motion { animation: breathe 1.4s ease-in-out infinite; }
 
 #reticle {
+  --floor-progress: 0;
   position: absolute;
   z-index: 4;
   left: 50%;
   top: 57%;
   width: 62px;
   height: 62px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 2px solid rgba(255, 255, 255, 0.72);
   border-radius: 50%;
   transform: translate(-50%, -50%) rotateX(64deg);
   box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.07);
+  opacity: 0.28;
+  transition: opacity 220ms ease, border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
 }
 
 #reticle span {
@@ -185,6 +188,41 @@ button:disabled { opacity: 0.55; }
   border-radius: 50%;
   background: white;
   transform: translate(-50%, -50%);
+  transition: background-color 220ms ease, box-shadow 220ms ease;
+}
+
+#reticle[data-phase="searching"] {
+  border-color: rgba(255, 255, 255, 0.58);
+  opacity: 0.28;
+}
+
+#reticle[data-phase="candidate"] {
+  border-color: #ffc978;
+  background: rgba(255, 201, 120, 0.12);
+  box-shadow: 0 0 0 7px rgba(255, 201, 120, 0.09), 0 0 28px rgba(255, 201, 120, 0.2);
+  opacity: 0.6;
+}
+
+#reticle[data-phase="candidate"] span {
+  background: #ffc978;
+  box-shadow: 0 0 14px rgba(255, 201, 120, 0.8);
+}
+
+#reticle[data-phase="locked"] {
+  border-color: #72f2a5;
+  background: rgba(114, 242, 165, 0.22);
+  box-shadow: 0 0 0 8px rgba(114, 242, 165, 0.15), 0 0 36px rgba(114, 242, 165, 0.42);
+  opacity: 1;
+}
+
+#reticle[data-phase="locked"] span {
+  background: #72f2a5;
+  box-shadow: 0 0 18px rgba(114, 242, 165, 0.95);
+}
+
+#reticle[data-phase="tracking-lost"] {
+  border-color: #ff9b7a;
+  opacity: 0.24;
 }
 
 .secondary-button {

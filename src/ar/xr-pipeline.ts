@@ -2,34 +2,33 @@ import type {AppStateStore} from '../state/app-state'
 import type {PartitionScene} from '../scene/scene'
 import type {UiController} from '../ui/ui'
 import type {CameraPipelineModule, XR8Api} from './xr-types'
-import type {TrackingController} from './tracking'
+import type {FloorTrackingController} from './floor-tracking'
 
 export function createPartitionPipelineModule(options: {
   xr8: XR8Api
   store: AppStateStore
   scene: PartitionScene
-  tracking: TrackingController
+  floorTracking: FloorTrackingController
   ui: UiController
-  onSceneReady: (canvas: HTMLCanvasElement) => void
 }): CameraPipelineModule {
-  const {xr8, store, scene, tracking, ui, onSceneReady} = options
+  const {xr8, store, scene, floorTracking, ui} = options
   let frameCount = 0
 
   return {
     name: 'ar-partition-placement',
-    onStart: ({canvas}) => {
+    onStart: () => {
       scene.initialize(xr8)
-      onSceneReady(canvas)
       store.set('coaching')
-      ui.updateDebug({tracking: tracking.snapshot(), scene: scene.modelSnapshot()})
+      floorTracking.reset()
+      ui.updateDebug({floor: floorTracking.snapshot(), scene: scene.modelSnapshot()})
     },
     onUpdate: ({processCpuResult}) => {
-      tracking.update(processCpuResult?.reality)
+      floorTracking.update(processCpuResult?.reality)
       frameCount += 1
       if (frameCount % 30 === 0) {
         const camera = scene.cameraPosition()
         ui.updateDebug({
-          tracking: tracking.snapshot(),
+          floor: floorTracking.snapshot(),
           camera: camera?.toArray(),
           scene: {
             ...scene.modelSnapshot(),

@@ -11,6 +11,7 @@ interface LockedTransform {
 export class PartitionScene {
   private scene?: THREE.Scene
   private camera?: THREE.Camera
+  private floorMarker?: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>
   private partition?: THREE.Group
   private partitionAsset?: Promise<PartitionLoadResult>
   private lockedTransform?: LockedTransform
@@ -29,10 +30,19 @@ export class PartitionScene {
     keyLight.position.set(2, 4, 1)
     scene.add(keyLight)
 
-    xr8.XrController.updateCameraProjectionMatrix({
-      origin: camera.position,
-      facing: camera.quaternion,
+    const markerMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffc978,
+      transparent: true,
+      opacity: 0.42,
+      side: THREE.DoubleSide,
+      depthWrite: false,
     })
+    this.floorMarker = new THREE.Mesh(new THREE.RingGeometry(0.12, 0.2, 64), markerMaterial)
+    this.floorMarker.name = 'floor-diagnostic-marker'
+    this.floorMarker.rotation.x = -Math.PI / 2
+    this.floorMarker.visible = false
+    this.floorMarker.renderOrder = 4
+    scene.add(this.floorMarker)
 
     this.partitionAsset = loadPartition()
     void this.partitionAsset.then(result => {
@@ -45,6 +55,31 @@ export class PartitionScene {
   }
 
   hasPlacement = (): boolean => Boolean(this.partition)
+
+  updateFloorMarker(
+    position: THREE.Vector3 | undefined,
+    phase: 'searching' | 'candidate' | 'locked' | 'tracking-lost',
+  ): void {
+    if (!this.floorMarker) return
+    if (!position || phase === 'searching') {
+      this.floorMarker.visible = false
+      return
+    }
+
+    this.floorMarker.visible = true
+    this.floorMarker.position.set(position.x, position.y + 0.012, position.z)
+    if (phase === 'candidate') {
+      this.floorMarker.material.color.setHex(0xffc978)
+      this.floorMarker.material.opacity = 0.42
+    } else if (phase === 'locked') {
+      this.floorMarker.material.color.setHex(0x72f2a5)
+      this.floorMarker.material.opacity = 0.96
+    } else {
+      this.floorMarker.material.color.setHex(0xff9b7a)
+      this.floorMarker.material.opacity = 0.2
+    }
+    this.floorMarker.material.needsUpdate = true
+  }
 
   async place(position: THREE.Vector3, yaw: number): Promise<PartitionLoadResult> {
     if (!this.scene || !this.partitionAsset) throw new Error('Three.js 장면이 아직 준비되지 않았습니다.')

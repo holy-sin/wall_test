@@ -9,6 +9,7 @@
     "postinstall": "node scripts/copy-xr.mjs",
     "dev": "node scripts/copy-xr.mjs && vite --host 0.0.0.0",
     "build": "node scripts/copy-xr.mjs && node scripts/check-model.mjs && tsc --noEmit && vite build",
+    "verify:logic": "node scripts/verify-controllers.mjs",
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {

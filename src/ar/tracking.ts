@@ -9,6 +9,8 @@ export interface TrackingSnapshot {
   reason: string
   normalFrames: number
   limitedFrames: number
+  position?: [number, number, number]
+  rotation?: [number, number, number, number]
 }
 
 export class TrackingController {
@@ -16,6 +18,8 @@ export class TrackingController {
   private limitedFrames = 0
   private status = 'UNKNOWN'
   private reason = 'UNSPECIFIED'
+  private position?: [number, number, number]
+  private rotation?: [number, number, number, number]
 
   constructor(
     private readonly store: AppStateStore,
@@ -27,6 +31,12 @@ export class TrackingController {
 
     this.status = reality.trackingStatus
     this.reason = reality.trackingReason ?? 'UNSPECIFIED'
+    if (reality.position) {
+      this.position = [reality.position.x, reality.position.y, reality.position.z]
+    }
+    if (reality.rotation) {
+      this.rotation = [reality.rotation.x, reality.rotation.y, reality.rotation.z, reality.rotation.w]
+    }
 
     if (this.status === 'NORMAL') {
       this.normalFrames += 1
@@ -69,6 +79,8 @@ export class TrackingController {
       reason: this.reason,
       normalFrames: this.normalFrames,
       limitedFrames: this.limitedFrames,
+      position: this.position,
+      rotation: this.rotation,
     }
   }
 }

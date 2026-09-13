@@ -8,17 +8,38 @@ interface LockedTransform {
   scale: THREE.Vector3
 }
 
+export interface SceneSnapshot {
+  camera?: {
+    position: [number, number, number]
+    quaternion: [number, number, number, number]
+    yaw: number
+  }
+  absoluteScaleMode: 'absolute'
+  placementPlane: 'Y=0'
+  partition: {
+    loaded: boolean
+    placed: boolean
+    fallback?: boolean
+    warning?: string
+    position?: [number, number, number]
+    yaw?: number
+    scale?: [number, number, number]
+  }
+  transformLocked: boolean
+}
+
 export class PartitionScene {
   private scene?: THREE.Scene
   private camera?: THREE.Camera
-  private floorMarker?: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>
+  private groundPlane?: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>
   private partition?: THREE.Group
   private partitionAsset?: Promise<PartitionLoadResult>
   private lockedTransform?: LockedTransform
   private invariantWarningSent = false
   private lastLoadResult?: PartitionLoadResult
+  private readonly raycaster = new THREE.Raycaster()
 
-  initialize(xr8: XR8Api): void {
+  initialize(xr8: XR8Api, debug: boolean): void {
     const {scene, camera, renderer} = xr8.Threejs.xrScene()
     this.scene = scene
     this.camera = camera
@@ -30,19 +51,37 @@ export class PartitionScene {
     keyLight.position.set(2, 4, 1)
     scene.add(keyLight)
 
-    const markerMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffc978,
+    const planeMaterial = new THREE.MeshBasicMaterial({
+      color: 0x72f2a5,
       transparent: true,
-      opacity: 0.42,
+      opacity: debug ? 0.12 : 0,
       side: THREE.DoubleSide,
       depthWrite: false,
     })
-    this.floorMarker = new THREE.Mesh(new THREE.RingGeometry(0.12, 0.2, 64), markerMaterial)
-    this.floorMarker.name = 'floor-diagnostic-marker'
-    this.floorMarker.rotation.x = -Math.PI / 2
-    this.floorMarker.visible = false
-    this.floorMarker.renderOrder = 4
-    scene.add(this.floorMarker)
+    this.groundPlane = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), planeMaterial)
+    this.groundPlane.name = 'placement-ground-y0'
+    this.groundPlane.rotation.x = -Math.PI / 2
+    this.groundPlane.position.set(0, 0, 0)
+    this.groundPlane.updateMatrixWorld(true)
+    scene.add(this.groundPlane)
+
+    if (debug) {
+      const grid = new THREE.GridHelper(20, 40, 0x72f2a5, 0x3e6d50)
+      grid.name = 'debug-ground-grid-y0'
+      grid.position.y = 0.006
+      scene.add(grid)
+    }
+
+    // Official 8th Wall Three.js setup: initialize above Y=0 and sync the XR camera.
+    camera.position.set(0, 2, 2)
+    xr8.XrController.updateCameraProjectionMatrix({
+      origin: camera.position,
+      facing: camera.quaternion,
+    })
+    console.info('[xr] camera projection synchronized', {
+      origin: camera.position.toArray(),
+      facing: camera.quaternion.toArray(),
+    })
 
     this.partitionAsset = loadPartition()
     void this.partitionAsset.then(result => {
@@ -56,29 +95,12 @@ export class PartitionScene {
 
   hasPlacement = (): boolean => Boolean(this.partition)
 
-  updateFloorMarker(
-    position: THREE.Vector3 | undefined,
-    phase: 'searching' | 'candidate' | 'locked' | 'tracking-lost',
-  ): void {
-    if (!this.floorMarker) return
-    if (!position || phase === 'searching') {
-      this.floorMarker.visible = false
-      return
-    }
-
-    this.floorMarker.visible = true
-    this.floorMarker.position.set(position.x, position.y + 0.012, position.z)
-    if (phase === 'candidate') {
-      this.floorMarker.material.color.setHex(0xffc978)
-      this.floorMarker.material.opacity = 0.42
-    } else if (phase === 'locked') {
-      this.floorMarker.material.color.setHex(0x72f2a5)
-      this.floorMarker.material.opacity = 0.96
-    } else {
-      this.floorMarker.material.color.setHex(0xff9b7a)
-      this.floorMarker.material.opacity = 0.2
-    }
-    this.floorMarker.material.needsUpdate = true
+  intersectGround(pointerNdc: THREE.Vector2): THREE.Vector3 | undefined {
+    if (!this.camera || !this.groundPlane) return undefined
+    this.camera.updateMatrixWorld(true)
+    this.groundPlane.updateMatrixWorld(true)
+    this.raycaster.setFromCamera(pointerNdc, this.camera)
+    return this.raycaster.intersectObject(this.groundPlane, false)[0]?.point.clone()
   }
 
   async place(position: THREE.Vector3, yaw: number): Promise<PartitionLoadResult> {
@@ -124,11 +146,6 @@ export class PartitionScene {
     return forward.normalize()
   }
 
-  cameraPosition(): THREE.Vector3 | undefined {
-    if (!this.camera) return undefined
-    return this.camera.getWorldPosition(new THREE.Vector3())
-  }
-
   verifyLockedTransform(): boolean {
     if (!this.partition || !this.lockedTransform) return true
     const unchanged =
@@ -142,11 +159,30 @@ export class PartitionScene {
     return unchanged
   }
 
-  modelSnapshot(): {loaded: boolean; fallback?: boolean; warning?: string} {
+  snapshot(): SceneSnapshot {
+    const cameraPosition = this.camera?.getWorldPosition(new THREE.Vector3())
+    const cameraQuaternion = this.camera?.getWorldQuaternion(new THREE.Quaternion())
+    const cameraEuler = cameraQuaternion ? new THREE.Euler().setFromQuaternion(cameraQuaternion, 'YXZ') : undefined
     return {
-      loaded: Boolean(this.lastLoadResult),
-      fallback: this.lastLoadResult?.usedFallback,
-      warning: this.lastLoadResult?.warning,
+      camera: cameraPosition && cameraQuaternion && cameraEuler
+        ? {
+            position: cameraPosition.toArray(),
+            quaternion: cameraQuaternion.toArray(),
+            yaw: cameraEuler.y,
+          }
+        : undefined,
+      absoluteScaleMode: 'absolute',
+      placementPlane: 'Y=0',
+      partition: {
+        loaded: Boolean(this.lastLoadResult),
+        placed: Boolean(this.partition),
+        fallback: this.lastLoadResult?.usedFallback,
+        warning: this.lastLoadResult?.warning,
+        position: this.partition?.position.toArray(),
+        yaw: this.partition?.rotation.y,
+        scale: this.partition?.scale.toArray(),
+      },
+      transformLocked: this.verifyLockedTransform(),
     }
   }
 }

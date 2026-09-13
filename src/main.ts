@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import './styles.css'
-import {FloorTrackingController} from './ar/floor-tracking'
+import {PlacementController} from './ar/placement'
+import {TrackingController} from './ar/tracking'
 import {createPartitionPipelineModule} from './ar/xr-pipeline'
 import {ensureSupported, loadXrEngine, startXr} from './ar/xr-engine'
 import {AppStateStore} from './state/app-state'
@@ -20,27 +21,45 @@ const canvas = requireCanvas()
 const store = new AppStateStore()
 const ui = new UiController(store)
 const partitionScene = new PartitionScene()
-let floorTracking: FloorTrackingController | undefined
+const debug = new URLSearchParams(location.search).get('debug') === '1'
+let tracking: TrackingController | undefined
+let placement: PlacementController | undefined
 let startAttempted = false
 
 async function beginAr(): Promise<void> {
   if (startAttempted) return
   startAttempted = true
-  ui.startFloorDiagnostic()
   store.set('requesting-camera')
 
   try {
     const xr8 = await loadXrEngine()
     ensureSupported(xr8)
     store.set('initializing')
-    floorTracking = new FloorTrackingController(xr8, store, partitionScene, ui)
+    const trackingController = new TrackingController(store, partitionScene.hasPlacement)
+    const placementController = new PlacementController(
+      canvas,
+      store,
+      partitionScene,
+      message => ui.showNotice(message),
+      () => {
+        ui.updateRuntimeDebug(
+          trackingController.snapshot(),
+          placementController.snapshot(),
+          partitionScene.snapshot(),
+        )
+      },
+    )
+    tracking = trackingController
+    placement = placementController
 
     const pipeline = createPartitionPipelineModule({
       xr8,
       store,
       scene: partitionScene,
-      floorTracking,
+      tracking: trackingController,
+      placement: placementController,
       ui,
+      debug,
     })
 
     startXr(xr8, canvas, pipeline)
@@ -54,7 +73,8 @@ async function beginAr(): Promise<void> {
 ui.startButton.addEventListener('click', () => void beginAr())
 ui.replaceButton.addEventListener('click', event => {
   event.stopPropagation()
-  floorTracking?.reset()
+  placement?.reset()
+  tracking?.resetForPlacement()
 })
 ui.retryButton.addEventListener('click', () => location.reload())
 

@@ -1,21 +1,18 @@
 import * as THREE from 'three'
 import type {AppStateStore} from '../state/app-state'
-import type {DebugView} from '../ui/ui'
 import type {PartitionScene} from '../scene/scene'
-import type {XR8Api} from './xr-types'
 
 export interface PlacementSnapshot {
-  hit: string
-  position?: [number, number, number]
-  yaw?: number
+  result: string
+  lastPointerNdc?: [number, number]
+  lastIntersection?: [number, number, number]
 }
 
 export class PlacementController {
   private inProgress = false
-  private snapshotValue: PlacementSnapshot = {hit: 'not attempted'}
+  private snapshotValue: PlacementSnapshot = {result: 'not attempted'}
 
   constructor(
-    private readonly xr8: XR8Api,
     private readonly canvas: HTMLCanvasElement,
     private readonly store: AppStateStore,
     private readonly scene: PartitionScene,
@@ -31,7 +28,7 @@ export class PlacementController {
 
   reset(): void {
     this.scene.remove()
-    this.snapshotValue = {hit: 'reset'}
+    this.snapshotValue = {result: 'reset'}
     this.refreshDebug()
   }
 
@@ -46,52 +43,50 @@ export class PlacementController {
     this.inProgress = true
     try {
       const rect = this.canvas.getBoundingClientRect()
-      // Official API: normalized camera-feed coordinates in [0, 1], origin at top-left.
-      const screenX = THREE.MathUtils.clamp((event.clientX - rect.left) / rect.width, 0, 1)
-      const screenY = THREE.MathUtils.clamp((event.clientY - rect.top) / rect.height, 0, 1)
-      const hits = this.xr8.XrController.hitTest(screenX, screenY, ['FEATURE_POINT'])
+      const pointer = new THREE.Vector2(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1,
+      )
+      pointer.clampScalar(-1, 1)
+      const intersection = this.scene.intersectGround(pointer)
 
-      if (!hits.length) {
-        this.snapshotValue = {hit: `miss @ ${screenX.toFixed(3)}, ${screenY.toFixed(3)}`}
-        console.info('[hitTest] miss', {screenX, screenY})
-        this.showNotice('바닥이 잘 보이도록 천천히 움직인 뒤 다시 터치해 주세요.')
+      if (!intersection) {
+        this.snapshotValue = {
+          result: 'ray missed Y=0 plane',
+          lastPointerNdc: [pointer.x, pointer.y],
+        }
+        console.info('[placement] ray missed Y=0 plane', {pointerNdc: pointer.toArray()})
+        this.showNotice('화면 아래쪽의 바닥을 터치해 주세요.')
         return
       }
 
-      const hit = hits.find(result => /GROUND|SURFACE/i.test(result.type ?? '')) ?? hits[0]
       const forward = this.scene.cameraForwardOnGround()
       if (!forward) throw new Error('카메라 방향을 계산할 수 없습니다.')
 
       // The partition's broad front face is +Z. Point it back toward the camera.
       const yaw = Math.atan2(-forward.x, -forward.z)
-      const position = new THREE.Vector3(hit.position.x, 0, hit.position.z)
+      const position = new THREE.Vector3(intersection.x, 0, intersection.z)
       const asset = await this.scene.place(position, yaw)
 
       this.snapshotValue = {
-        hit: `success${hit.type ? ` (${hit.type})` : ''}`,
-        position: [position.x, position.y, position.z],
-        yaw,
+        result: 'placed on Y=0 plane',
+        lastPointerNdc: [pointer.x, pointer.y],
+        lastIntersection: [position.x, position.y, position.z],
       }
-      console.info('[hitTest] success', {
-        screen: [screenX, screenY],
-        resultType: hit.type,
-        rawPosition: hit.position,
-        placementPosition: position.toArray(),
+      console.info('[placement] success', {
+        pointerNdc: pointer.toArray(),
+        intersection: position.toArray(),
         yaw,
       })
       this.store.set('placed', {warning: asset.warning})
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       console.error('[placement] failed', error)
-      this.snapshotValue = {hit: `error: ${message}`}
+      this.snapshotValue = {...this.snapshotValue, result: `error: ${message}`}
       this.showNotice(`배치하지 못했습니다. ${message}`)
     } finally {
       this.inProgress = false
       this.refreshDebug()
     }
   }
-}
-
-export function placementDebugView(snapshot: PlacementSnapshot): DebugView['placement'] {
-  return snapshot
 }

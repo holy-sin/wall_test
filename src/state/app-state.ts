@@ -3,8 +3,6 @@ export type AppState =
   | 'requesting-camera'
   | 'initializing'
   | 'coaching'
-  | 'floor-candidate'
-  | 'floor-locked'
   | 'ready-to-place'
   | 'placed'
   | 'tracking-lost'

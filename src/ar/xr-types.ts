@@ -17,13 +17,6 @@ export interface RealityResult {
   trackingReason?: string
 }
 
-export interface HitTestResult {
-  type?: string
-  position: XrVector3
-  rotation?: XrQuaternion
-  distance?: number
-}
-
 export interface PipelineUpdateArgs {
   processCpuResult?: {
     reality?: RealityResult
@@ -61,7 +54,6 @@ export interface XR8Api {
   XrController: {
     configure(options: {disableWorldTracking: boolean; scale: 'absolute' | 'responsive'}): void
     pipelineModule(): CameraPipelineModule
-    hitTest(x: number, y: number, includedTypes?: string[]): HitTestResult[]
     updateCameraProjectionMatrix(options: {origin: THREE.Vector3; facing: THREE.Quaternion}): void
   }
   XrConfig: {

@@ -1,41 +1,37 @@
 import type {AppStateStore} from '../state/app-state'
 import type {PartitionScene} from '../scene/scene'
 import type {UiController} from '../ui/ui'
+import type {PlacementController} from './placement'
+import type {TrackingController} from './tracking'
 import type {CameraPipelineModule, XR8Api} from './xr-types'
-import type {FloorTrackingController} from './floor-tracking'
 
 export function createPartitionPipelineModule(options: {
   xr8: XR8Api
   store: AppStateStore
   scene: PartitionScene
-  floorTracking: FloorTrackingController
+  tracking: TrackingController
+  placement: PlacementController
   ui: UiController
+  debug: boolean
 }): CameraPipelineModule {
-  const {xr8, store, scene, floorTracking, ui} = options
+  const {xr8, store, scene, tracking, placement, ui, debug} = options
   let frameCount = 0
+
+  const refreshDebug = (): void => {
+    ui.updateRuntimeDebug(tracking.snapshot(), placement.snapshot(), scene.snapshot())
+  }
 
   return {
     name: 'ar-partition-placement',
     onStart: () => {
+      scene.initialize(xr8, debug)
       store.set('coaching')
-      floorTracking.reset()
-      scene.initialize(xr8)
-      ui.updateDebug({floor: floorTracking.snapshot(), scene: scene.modelSnapshot()})
+      refreshDebug()
     },
     onUpdate: ({processCpuResult}) => {
-      floorTracking.update(processCpuResult?.reality)
+      tracking.update(processCpuResult?.reality)
       frameCount += 1
-      if (frameCount % 30 === 0) {
-        const camera = scene.cameraPosition()
-        ui.updateDebug({
-          floor: floorTracking.snapshot(),
-          camera: camera?.toArray(),
-          scene: {
-            ...scene.modelSnapshot(),
-            transformLocked: scene.verifyLockedTransform(),
-          },
-        })
-      }
+      if (frameCount % 15 === 0) refreshDebug()
     },
     onCameraStatusChange: ({status}) => {
       console.info('[camera]', status)
@@ -49,5 +45,6 @@ export function createPartitionPipelineModule(options: {
         })
       }
     },
+    onDetach: () => placement.destroy(),
   }
 }

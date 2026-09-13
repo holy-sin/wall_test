@@ -1,6 +1,6 @@
 # AR 가벽 배치 MVP
 
-8th Wall World Tracking과 Absolute Scale을 사용해 1.5m × 2.3m × 0.1m 가벽을 실제 공간의 바닥에 한 개 배치하는 Vite + TypeScript + Three.js MVP입니다.
+8th Wall World Tracking과 Absolute Scale을 사용해 1.5m × 2.3m × 0.1m 가벽을 Y=0 ground plane에 한 개 배치하는 Vite + TypeScript + Three.js MVP입니다. 별도 surface hitTest나 floor-lock 단계 없이 SLAM이 안정되면 Three.js Raycaster로 터치 위치를 계산합니다.
 
 ## 실행
 
@@ -28,14 +28,14 @@ npm run build
 
 ## 디버그 화면
 
-URL에 `?debug=1`을 붙이면 현재 상태, tracking status/reason, 카메라 위치, hitTest 결과, 배치 좌표/yaw, 모델 로드 상태와 transform lock 검사를 볼 수 있습니다.
+URL에 `?debug=1`을 붙이면 Y=0 디버그 grid와 현재 상태, tracking status/reason, 카메라 위치/quaternion/yaw, pointer NDC, Y=0 교점, 배치 좌표/yaw, 모델 로드 상태와 transform lock 검사를 볼 수 있습니다.
 
 ## 실제 기기 확인 순서
 
 1. Android Chrome 또는 iOS Safari에서 HTTPS URL을 엽니다.
 2. `AR 시작`을 누르고 카메라 권한을 허용합니다.
 3. 안내에 따라 휴대폰을 천천히 앞뒤로 움직입니다.
-4. 배치 안내가 보이면 바닥을 한 번 터치합니다.
+4. `ready-to-place` 안내가 보이면 화면 아래쪽에 보이는 바닥을 한 번 터치합니다.
 5. 1~2m 이동하며 가벽이 화면을 따라오지 않고 같은 월드 위치에 남는지 확인합니다.
 6. `다시 배치`를 여러 번 사용해 가벽이 한 개만 존재하는지 확인합니다.
 

@@ -1,20 +1,32 @@
 import type {AppSnapshot, AppStateStore} from '../state/app-state'
 import type {PlacementSnapshot} from '../ar/placement'
 import type {TrackingSnapshot} from '../ar/tracking'
-import type {FloorSnapshot} from '../ar/floor-tracking'
+import type {SceneSnapshot} from '../scene/scene'
 
 export interface DebugView {
-  state?: string
-  tracking?: TrackingSnapshot
-  floor?: FloorSnapshot
-  camera?: number[]
-  placement?: PlacementSnapshot
-  scene?: {
-    loaded: boolean
-    fallback?: boolean
-    warning?: string
-    transformLocked?: boolean
-  }
+  AppState?: string
+  trackingStatus?: string | null
+  trackingReason?: string | null
+  trackingNormalFrames?: number | null
+  trackingLimitedFrames?: number | null
+  trackingPosition?: [number, number, number] | null
+  trackingRotation?: [number, number, number, number] | null
+  camera?: [number, number, number] | null
+  cameraQuaternion?: [number, number, number, number] | null
+  cameraYaw?: number | null
+  absoluteScaleMode?: 'absolute'
+  placementPlane?: 'Y=0'
+  lastPointerNDC?: [number, number] | null
+  lastIntersection?: [number, number, number] | null
+  placementResult?: string | null
+  partitionLoaded?: boolean
+  partitionPlaced?: boolean
+  partitionPosition?: [number, number, number] | null
+  partitionYaw?: number | null
+  partitionScale?: [number, number, number] | null
+  partitionFallback?: boolean | null
+  partitionWarning?: string | null
+  transformLocked?: boolean
 }
 
 function element<T extends HTMLElement>(id: string): T {
@@ -35,13 +47,8 @@ export class UiController {
   private readonly errorPanel = element<HTMLElement>('error-panel')
   private readonly errorMessage = element<HTMLElement>('error-message')
   private readonly reticle = element<HTMLElement>('reticle')
-  private readonly floorDiagnostic = element<HTMLElement>('floor-diagnostic')
-  private readonly floorDiagnosticTitle = element<HTMLElement>('floor-diagnostic-title')
-  private readonly floorDiagnosticDetail = element<HTMLElement>('floor-diagnostic-detail')
-  private readonly floorDiagnosticBar = element<HTMLElement>('floor-diagnostic-bar')
   private readonly debugPanel = element<HTMLElement>('debug-panel')
   private debugView: DebugView = {}
-  private floorDiagnosticStarted = false
   private noticeTimer?: number
 
   constructor(private readonly store: AppStateStore) {
@@ -58,54 +65,47 @@ export class UiController {
   }
 
   updateDebug(partial: DebugView): void {
-    this.debugView = {...this.debugView, ...partial, state: this.store.current.state}
+    this.debugView = {...this.debugView, ...partial, AppState: this.store.current.state}
     if (!this.debugPanel.hidden) this.debugPanel.textContent = JSON.stringify(this.debugView, null, 2)
   }
 
-  startFloorDiagnostic(): void {
-    this.floorDiagnosticStarted = true
-    this.floorDiagnostic.hidden = false
-    this.floorDiagnostic.dataset.phase = 'searching'
-    this.floorDiagnosticTitle.textContent = '바닥 인식 안 됨'
-    this.floorDiagnosticDetail.textContent = '카메라 준비 중 · 아직 표면 결과가 없습니다.'
-    this.floorDiagnosticBar.style.width = '0%'
-    this.reticle.hidden = false
-    this.reticle.dataset.phase = 'searching'
-  }
-
-  setFloorFeedback(snapshot: FloorSnapshot): void {
-    const progress = Math.min(1, snapshot.consecutiveSurfaceSamples / snapshot.requiredSurfaceSamples)
-    const hitSummary = Object.entries(snapshot.hitTypes)
-      .map(([type, count]) => `${type} ${count}`)
-      .join(' · ')
-    this.reticle.dataset.phase = snapshot.phase
-    this.reticle.style.setProperty('--floor-progress', String(progress))
-    this.reticle.style.opacity = snapshot.phase === 'candidate' ? String(0.38 + progress * 0.46) : ''
-    this.floorDiagnostic.dataset.phase = snapshot.phase
-    this.floorDiagnosticBar.style.width = `${Math.round(progress * 100)}%`
-
-    if (snapshot.phase === 'searching') {
-      this.floorDiagnosticTitle.textContent = '바닥 인식 안 됨'
-      this.floorDiagnosticDetail.textContent = hitSummary || '표면 결과 없음 · 휴대폰을 천천히 움직이세요.'
-    } else if (snapshot.phase === 'candidate') {
-      this.floorDiagnosticTitle.textContent = `바닥 후보 감지 · ${snapshot.consecutiveSurfaceSamples}/${snapshot.requiredSurfaceSamples}`
-      this.floorDiagnosticDetail.textContent = `${hitSummary || 'SURFACE'} · 높이 흔들림 ${((snapshot.ySpread ?? 0) * 100).toFixed(1)}cm`
-    } else if (snapshot.phase === 'locked') {
-      this.floorDiagnosticTitle.textContent = '바닥 인식 완료'
-      this.floorDiagnosticDetail.textContent = `높이 ${(snapshot.floorY ?? 0).toFixed(2)}m · 흔들림 ${((snapshot.ySpread ?? 0) * 100).toFixed(1)}cm`
-    } else {
-      this.floorDiagnosticTitle.textContent = '공간 추적 손실'
-      this.floorDiagnosticDetail.textContent = '천천히 이전 위치를 비추면 인식을 복구합니다.'
-    }
+  updateRuntimeDebug(
+    tracking: TrackingSnapshot | undefined,
+    placement: PlacementSnapshot | undefined,
+    scene: SceneSnapshot,
+  ): void {
+    this.updateDebug({
+      trackingStatus: tracking?.status ?? null,
+      trackingReason: tracking?.reason ?? null,
+      trackingNormalFrames: tracking?.normalFrames ?? null,
+      trackingLimitedFrames: tracking?.limitedFrames ?? null,
+      trackingPosition: tracking?.position ?? null,
+      trackingRotation: tracking?.rotation ?? null,
+      camera: scene.camera?.position ?? null,
+      cameraQuaternion: scene.camera?.quaternion ?? null,
+      cameraYaw: scene.camera?.yaw ?? null,
+      absoluteScaleMode: scene.absoluteScaleMode,
+      placementPlane: scene.placementPlane,
+      lastPointerNDC: placement?.lastPointerNdc ?? null,
+      lastIntersection: placement?.lastIntersection ?? null,
+      placementResult: placement?.result ?? null,
+      partitionLoaded: scene.partition.loaded,
+      partitionPlaced: scene.partition.placed,
+      partitionPosition: scene.partition.position ?? null,
+      partitionYaw: scene.partition.yaw ?? null,
+      partitionScale: scene.partition.scale ?? null,
+      partitionFallback: scene.partition.fallback ?? null,
+      partitionWarning: scene.partition.warning ?? null,
+      transformLocked: scene.transformLocked,
+    })
   }
 
   private render(snapshot: AppSnapshot): void {
     window.clearTimeout(this.noticeTimer)
     this.intro.hidden = snapshot.state !== 'idle'
     this.errorPanel.hidden = snapshot.state !== 'error'
-    this.floorDiagnostic.hidden = !this.floorDiagnosticStarted
-    this.replaceButton.hidden = !['floor-locked', 'placed'].includes(snapshot.state)
-    this.reticle.hidden = !this.floorDiagnosticStarted
+    this.replaceButton.hidden = snapshot.state !== 'placed'
+    this.reticle.hidden = snapshot.state !== 'ready-to-place'
     this.statusCard.hidden = ['idle', 'error'].includes(snapshot.state)
     this.startButton.disabled = snapshot.state !== 'idle'
 
@@ -116,10 +116,9 @@ export class UiController {
     const content: Partial<Record<typeof snapshot.state, [string, string]>> = {
       'requesting-camera': ['pulse', '카메라 권한을 확인하고 있습니다…'],
       initializing: ['pulse', 'AR 엔진을 준비하고 있습니다…'],
-      coaching: ['motion', '바닥을 화면 중앙에 두고 휴대폰을 천천히 움직여 주세요.'],
-      'floor-candidate': ['warning', '바닥 후보를 확인하고 있습니다. 잠시만 천천히 움직여 주세요.'],
-      'floor-locked': ['ready', '바닥 인식 완료. 초록 원이 같은 위치에 고정되는지 확인하세요.'],
-      'ready-to-place': ['ready', '가벽을 놓을 바닥을 터치하세요.'],
+      coaching: ['motion', '공간 추적을 준비 중입니다. 휴대폰을 천천히 움직여 주세요.'],
+      'ready-to-place': ['ready', '준비되었습니다. 가벽을 놓을 바닥을 터치하세요.'],
+      placed: ['ready', '가벽을 배치했습니다. 움직이며 같은 위치에 고정되는지 확인하세요.'],
       'tracking-lost': ['warning', '공간 추적이 약해졌습니다. 휴대폰을 천천히 주변으로 움직여 주세요.'],
     }
     const selected = content[snapshot.state]
@@ -128,11 +127,6 @@ export class UiController {
       this.statusMessage.textContent = selected[1]
     }
 
-    if (snapshot.state === 'coaching') this.reticle.dataset.phase = 'searching'
-    if (snapshot.state === 'floor-candidate') this.reticle.dataset.phase = 'candidate'
-    if (snapshot.state === 'floor-locked') this.reticle.dataset.phase = 'locked'
-    if (snapshot.state === 'tracking-lost') this.reticle.dataset.phase = 'tracking-lost'
-
-    this.updateDebug({state: snapshot.state})
+    this.updateDebug({AppState: snapshot.state})
   }
 }

@@ -1,42 +1,61 @@
-# AR 가벽 배치 MVP
+# A-Frame: World Effects
 
-8th Wall World Tracking과 Absolute Scale을 사용해 1.5m × 2.3m × 0.1m 가벽을 Y=0 ground plane에 한 개 배치하는 Vite + TypeScript + Three.js MVP입니다. 별도 surface hitTest나 floor-lock 단계 없이 SLAM이 안정되면 Three.js Raycaster로 터치 위치를 계산합니다.
+This example allows the user to grow cacti 🌵  by tapping or clicking the ground. Showcases raycasting,
+spawning new objects, and importing a 3D model.
 
-## 실행
+![Cacti sprouting from the ground, in augmented reality, desktop 3D, and virtual reality](./src/assets/preview.gif)
 
-```bash
-npm install
-npm run dev
-```
+<details><summary>Try it out</summary>
 
-프로덕션 빌드:
+https://8thwall.org/aframe-world-effects-example/
 
-```bash
-npm run build
-```
+<img alt="QR Code for the preview link" src="https://8th.io/qr?v=2&url=https://8thwall.org/aframe-world-effects-example/" width=250 height=250 />
 
-`postinstall`, `dev`, `build` 단계에서 8th Wall Engine과 XRExtras가 `public/external`로 복사됩니다. 모바일 카메라 테스트는 HTTPS가 필요하므로 개발 서버를 ngrok 같은 HTTPS 터널로 연결하세요.
+</details>
 
-상시 테스트 주소는 GitHub 저장소를 Vercel 프로젝트로 가져오는 방식을 권장합니다. Vercel 설정은 다음과 같습니다.
+## Usage
 
-- Framework Preset: `Vite`
-- Build Command: `pnpm run build`
-- Output Directory: `dist`
-- Install Command: `pnpm install --frozen-lockfile`
+1. On this repository, click **Code** > **Download ZIP**. If you clone the repository instead, make sure you have Git LFS installed and run `git lfs pull`
+2. Unzip the folder to the location you'd like to work in
+3. `npm install`
+4. `npm run serve`
+5. To connect to a mobile device, follow [these instructions](https://8th.io/test-on-mobile)
+6. Recommended: Track your files using [git](https://git-scm.com/about) to avoid losing progress
 
-배포가 완료되면 고정된 `https://<project>.vercel.app` 주소를 휴대폰에서 엽니다. `main` 브랜치 push는 production 배포로, 그 외 브랜치와 pull request는 별도 preview 주소로 사용할 수 있습니다.
+## Deployment
 
-## 디버그 화면
+This project contains Github Actions configuration for deployment to Github Pages, which triggers automatically by pushing the `main` branch. You can also create a production build using `npm run build`, which outputs the production build to the `dist` folder, and publish to the web using [this guide](https://8thwall.org/docs/getting-started/publishing#self-hosting-your-project).
 
-URL에 `?debug=1`을 붙이면 Y=0 디버그 grid와 현재 상태, tracking status/reason, 카메라 위치/quaternion/yaw, pointer NDC, Y=0 교점, 배치 좌표/yaw, 모델 로드 상태와 transform lock 검사를 볼 수 있습니다.
+## Questions?
 
-## 실제 기기 확인 순서
+Please raise any questions on [Github Discussions](https://github.com/orgs/8thwall/discussions) or join the [Discord](https://8th.io/discord) to connect with the community.
 
-1. Android Chrome 또는 iOS Safari에서 HTTPS URL을 엽니다.
-2. `AR 시작`을 누르고 카메라 권한을 허용합니다.
-3. 안내에 따라 휴대폰을 천천히 앞뒤로 움직입니다.
-4. `ready-to-place` 안내가 보이면 화면 아래쪽에 보이는 바닥을 한 번 터치합니다.
-5. 1~2m 이동하며 가벽이 화면을 따라오지 않고 같은 월드 위치에 남는지 확인합니다.
-6. `다시 배치`를 여러 번 사용해 가벽이 한 개만 존재하는지 확인합니다.
+---
 
-Absolute Scale은 공간 미리보기를 위한 추정값이며 시공용 정밀 측정값이 아닙니다.
+### Optimizing for Metaversal Deployment
+
+With R18, the all-new 8th Wall Engine features Metaversal Deployment, enabling you to create WebAR experiences once and deploy them to smartphones, tablets, computers and both AR and VR headsets. This project has a few platform-specific customizations:
+
+In **body.html**, we add the ```"allowedDevices: any"``` parameter to our ```xrweb``` component in ```<a-scene>``` 
+which ensures the project opens on all platforms, including desktop. Environment parameters 
+have been customized to generate an open desert space.
+
+---
+
+### About World Tracking
+
+Built entirely using standards-compliant JavaScript and WebGL, 8th Wall’s Simultaneous Localization 
+and Mapping (SLAM) engine is hyper-optimized for real-time AR on mobile browsers. Features include
+Six Degrees of Freedom (6-DoF), Lighting estimation, instant surface detection and responsive scale.
+
+The Y position of the camera at start effectively determines the scale of virtual content on a surface 
+(e.g. smaller y, bigger content). This can be reset at any time by calling 
+[```recenter()```](https://www.8thwall.com/docs/web/#recenter).
+
+The camera should NOT be at a height (Y) of zero. It must be set to a non-zero value.
+
+---
+
+#### Attribution
+
+Toon Cactus by [PolyChromic](https://skfb.ly/6Xvws)

@@ -26,6 +26,7 @@ let startAttempted = false
 async function beginAr(): Promise<void> {
   if (startAttempted) return
   startAttempted = true
+  ui.startFloorDiagnostic()
   store.set('requesting-camera')
 
   try {

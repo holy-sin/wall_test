@@ -17,9 +17,9 @@ export function createPartitionPipelineModule(options: {
   return {
     name: 'ar-partition-placement',
     onStart: () => {
-      scene.initialize(xr8)
       store.set('coaching')
       floorTracking.reset()
+      scene.initialize(xr8)
       ui.updateDebug({floor: floorTracking.snapshot(), scene: scene.modelSnapshot()})
     },
     onUpdate: ({processCpuResult}) => {
@@ -39,8 +39,10 @@ export function createPartitionPipelineModule(options: {
     },
     onCameraStatusChange: ({status}) => {
       console.info('[camera]', status)
-      if (status === 'requesting') store.set('requesting-camera')
-      if (status === 'hasStream') store.set('initializing')
+      const startupState = ['idle', 'requesting-camera', 'initializing'].includes(store.current.state)
+      if (status === 'requesting' && startupState) store.set('requesting-camera')
+      if (status === 'hasStream' && startupState) store.set('initializing')
+      if (status === 'hasVideo' && startupState) store.set('coaching')
       if (status === 'failed') {
         store.set('error', {
           message: '카메라 권한이 거부되었거나 카메라를 열 수 없습니다. 브라우저 설정에서 카메라 권한을 허용해 주세요.',

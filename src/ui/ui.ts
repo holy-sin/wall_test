@@ -41,6 +41,7 @@ export class UiController {
   private readonly floorDiagnosticBar = element<HTMLElement>('floor-diagnostic-bar')
   private readonly debugPanel = element<HTMLElement>('debug-panel')
   private debugView: DebugView = {}
+  private floorDiagnosticStarted = false
   private noticeTimer?: number
 
   constructor(private readonly store: AppStateStore) {
@@ -59,6 +60,17 @@ export class UiController {
   updateDebug(partial: DebugView): void {
     this.debugView = {...this.debugView, ...partial, state: this.store.current.state}
     if (!this.debugPanel.hidden) this.debugPanel.textContent = JSON.stringify(this.debugView, null, 2)
+  }
+
+  startFloorDiagnostic(): void {
+    this.floorDiagnosticStarted = true
+    this.floorDiagnostic.hidden = false
+    this.floorDiagnostic.dataset.phase = 'searching'
+    this.floorDiagnosticTitle.textContent = '바닥 인식 안 됨'
+    this.floorDiagnosticDetail.textContent = '카메라 준비 중 · 아직 표면 결과가 없습니다.'
+    this.floorDiagnosticBar.style.width = '0%'
+    this.reticle.hidden = false
+    this.reticle.dataset.phase = 'searching'
   }
 
   setFloorFeedback(snapshot: FloorSnapshot): void {
@@ -91,9 +103,9 @@ export class UiController {
     window.clearTimeout(this.noticeTimer)
     this.intro.hidden = snapshot.state !== 'idle'
     this.errorPanel.hidden = snapshot.state !== 'error'
-    this.floorDiagnostic.hidden = ['idle', 'requesting-camera', 'initializing', 'error'].includes(snapshot.state)
+    this.floorDiagnostic.hidden = !this.floorDiagnosticStarted
     this.replaceButton.hidden = !['floor-locked', 'placed'].includes(snapshot.state)
-    this.reticle.hidden = !['coaching', 'floor-candidate', 'floor-locked', 'tracking-lost'].includes(snapshot.state)
+    this.reticle.hidden = !this.floorDiagnosticStarted
     this.statusCard.hidden = ['idle', 'error'].includes(snapshot.state)
     this.startButton.disabled = snapshot.state !== 'idle'
 

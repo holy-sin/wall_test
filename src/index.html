@@ -27,15 +27,25 @@
 <!-- Copyright (c) 2022 8th Wall, Inc. -->
 <!-- body.html is optional; elements will be added to your html body after app.js is loaded. -->
 
+<div id="cameraLoadingOverlay" role="status" aria-live="polite">
+  <span>카메라 준비 중...</span>
+</div>
+
 <div class="over">
   <span id="promptText">Tap To Place Model</span>
+</div>
+
+<div class="engine-license">
+  XR Engine © 2026 Niantic Spatial, Inc. ·
+  <a href="https://github.com/8thwall/engine/blob/main/LICENSE" target="_blank" rel="noreferrer">
+    License &amp; warranty disclaimer
+  </a>
 </div>
 
 <!-- Add the tap-place component to the scene so it has an effect -->
 <a-scene
   tap-place
   landing-page
-  xrextras-loading
   xrextras-runtime-error
   renderer="colorManagement:true"
   xrweb="

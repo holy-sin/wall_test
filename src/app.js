@@ -8,3 +8,22 @@ import './index.css'
 // Register custom A-Frame components in app.js before the scene in body.html has loaded.
 import {tapPlaceComponent} from './tap-place'
 AFRAME.registerComponent('tap-place', tapPlaceComponent)
+
+const bindLoadingOverlay = () => {
+  const scene = document.querySelector('a-scene')
+  const loadingOverlay = document.getElementById('cameraLoadingOverlay')
+
+  if (!scene || !loadingOverlay) {
+    return
+  }
+
+  scene.addEventListener('realityready', () => {
+    loadingOverlay.hidden = true
+  }, {once: true})
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bindLoadingOverlay, {once: true})
+} else {
+  bindLoadingOverlay()
+}

@@ -34,6 +34,17 @@
 
       <div id="reticle" aria-hidden="true" hidden><span></span></div>
 
+      <section id="floor-diagnostic" class="floor-diagnostic" aria-live="assertive" hidden>
+        <div class="floor-diagnostic__header">
+          <span id="floor-diagnostic-dot" class="floor-diagnostic__dot" aria-hidden="true"></span>
+          <strong id="floor-diagnostic-title">바닥 인식 안 됨</strong>
+        </div>
+        <p id="floor-diagnostic-detail">표면을 찾고 있습니다.</p>
+        <div class="floor-diagnostic__progress" aria-hidden="true">
+          <span id="floor-diagnostic-bar"></span>
+        </div>
+      </section>
+
       <button id="replace-button" class="secondary-button" type="button" hidden>다시 인식</button>
 
       <section id="error-panel" class="panel error-panel" role="alert" hidden>

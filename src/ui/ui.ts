@@ -35,6 +35,10 @@ export class UiController {
   private readonly errorPanel = element<HTMLElement>('error-panel')
   private readonly errorMessage = element<HTMLElement>('error-message')
   private readonly reticle = element<HTMLElement>('reticle')
+  private readonly floorDiagnostic = element<HTMLElement>('floor-diagnostic')
+  private readonly floorDiagnosticTitle = element<HTMLElement>('floor-diagnostic-title')
+  private readonly floorDiagnosticDetail = element<HTMLElement>('floor-diagnostic-detail')
+  private readonly floorDiagnosticBar = element<HTMLElement>('floor-diagnostic-bar')
   private readonly debugPanel = element<HTMLElement>('debug-panel')
   private debugView: DebugView = {}
   private noticeTimer?: number
@@ -59,15 +63,35 @@ export class UiController {
 
   setFloorFeedback(snapshot: FloorSnapshot): void {
     const progress = Math.min(1, snapshot.consecutiveSurfaceSamples / snapshot.requiredSurfaceSamples)
+    const hitSummary = Object.entries(snapshot.hitTypes)
+      .map(([type, count]) => `${type} ${count}`)
+      .join(' · ')
     this.reticle.dataset.phase = snapshot.phase
     this.reticle.style.setProperty('--floor-progress', String(progress))
     this.reticle.style.opacity = snapshot.phase === 'candidate' ? String(0.38 + progress * 0.46) : ''
+    this.floorDiagnostic.dataset.phase = snapshot.phase
+    this.floorDiagnosticBar.style.width = `${Math.round(progress * 100)}%`
+
+    if (snapshot.phase === 'searching') {
+      this.floorDiagnosticTitle.textContent = '바닥 인식 안 됨'
+      this.floorDiagnosticDetail.textContent = hitSummary || '표면 결과 없음 · 휴대폰을 천천히 움직이세요.'
+    } else if (snapshot.phase === 'candidate') {
+      this.floorDiagnosticTitle.textContent = `바닥 후보 감지 · ${snapshot.consecutiveSurfaceSamples}/${snapshot.requiredSurfaceSamples}`
+      this.floorDiagnosticDetail.textContent = `${hitSummary || 'SURFACE'} · 높이 흔들림 ${((snapshot.ySpread ?? 0) * 100).toFixed(1)}cm`
+    } else if (snapshot.phase === 'locked') {
+      this.floorDiagnosticTitle.textContent = '바닥 인식 완료'
+      this.floorDiagnosticDetail.textContent = `높이 ${(snapshot.floorY ?? 0).toFixed(2)}m · 흔들림 ${((snapshot.ySpread ?? 0) * 100).toFixed(1)}cm`
+    } else {
+      this.floorDiagnosticTitle.textContent = '공간 추적 손실'
+      this.floorDiagnosticDetail.textContent = '천천히 이전 위치를 비추면 인식을 복구합니다.'
+    }
   }
 
   private render(snapshot: AppSnapshot): void {
     window.clearTimeout(this.noticeTimer)
     this.intro.hidden = snapshot.state !== 'idle'
     this.errorPanel.hidden = snapshot.state !== 'error'
+    this.floorDiagnostic.hidden = ['idle', 'requesting-camera', 'initializing', 'error'].includes(snapshot.state)
     this.replaceButton.hidden = !['floor-locked', 'placed'].includes(snapshot.state)
     this.reticle.hidden = !['coaching', 'floor-candidate', 'floor-locked', 'tracking-lost'].includes(snapshot.state)
     this.statusCard.hidden = ['idle', 'error'].includes(snapshot.state)

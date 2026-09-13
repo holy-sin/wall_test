@@ -193,7 +193,7 @@ button:disabled { opacity: 0.55; }
 
 #reticle[data-phase="searching"] {
   border-color: rgba(255, 255, 255, 0.58);
-  opacity: 0.28;
+  opacity: 0.62;
 }
 
 #reticle[data-phase="candidate"] {
@@ -222,7 +222,95 @@ button:disabled { opacity: 0.55; }
 
 #reticle[data-phase="tracking-lost"] {
   border-color: #ff9b7a;
-  opacity: 0.24;
+  opacity: 0.5;
+}
+
+.floor-diagnostic {
+  position: absolute;
+  z-index: 12;
+  left: 50%;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  width: min(calc(100% - 36px), 440px);
+  padding: 16px 18px;
+  border: 2px solid rgba(255, 255, 255, 0.34);
+  border-radius: 18px;
+  background: rgba(7, 10, 13, 0.94);
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(16px);
+  transform: translateX(-50%);
+}
+
+.floor-diagnostic__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.floor-diagnostic__header strong {
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+}
+
+.floor-diagnostic__dot {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #ff765f;
+  box-shadow: 0 0 0 6px rgba(255, 118, 95, 0.16);
+}
+
+.floor-diagnostic p {
+  margin: 8px 0 12px;
+  color: rgba(247, 248, 250, 0.78);
+  font: 0.76rem/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+
+.floor-diagnostic__progress {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.floor-diagnostic__progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: #ff765f;
+  transition: width 160ms ease, background-color 160ms ease;
+}
+
+.floor-diagnostic[data-phase="candidate"] {
+  border-color: rgba(255, 201, 120, 0.72);
+}
+
+.floor-diagnostic[data-phase="candidate"] .floor-diagnostic__dot,
+.floor-diagnostic[data-phase="candidate"] .floor-diagnostic__progress span {
+  background: #ffc978;
+}
+
+.floor-diagnostic[data-phase="locked"] {
+  border-color: #72f2a5;
+  background: rgba(5, 24, 14, 0.95);
+}
+
+.floor-diagnostic[data-phase="locked"] .floor-diagnostic__dot,
+.floor-diagnostic[data-phase="locked"] .floor-diagnostic__progress span {
+  background: #72f2a5;
+  box-shadow: 0 0 0 6px rgba(114, 242, 165, 0.18);
+}
+
+.floor-diagnostic[data-phase="tracking-lost"] .floor-diagnostic__dot,
+.floor-diagnostic[data-phase="tracking-lost"] .floor-diagnostic__progress span {
+  background: #ff9b7a;
+}
+
+.floor-diagnostic:not([hidden]) ~ .secondary-button {
+  bottom: calc(max(22px, env(safe-area-inset-bottom)) + 118px);
 }
 
 .secondary-button {

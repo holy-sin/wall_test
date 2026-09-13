@@ -1,0 +1,24 @@
+{
+  "name": "ar-partition-mvp",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "copy:xr": "node scripts/copy-xr.mjs",
+    "check:model": "node scripts/check-model.mjs",
+    "postinstall": "node scripts/copy-xr.mjs",
+    "dev": "node scripts/copy-xr.mjs && vite --host 0.0.0.0",
+    "build": "node scripts/copy-xr.mjs && node scripts/check-model.mjs && tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@8thwall/engine-binary": "1",
+    "@8thwall/xrextras": "1.0.0",
+    "three": "0.186.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.186.0",
+    "typescript": "5.9.2",
+    "vite": "8.2.2"
+  }
+}

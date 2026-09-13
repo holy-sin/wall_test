@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#0a0d12" />
+    <title>AR 가벽 배치</title>
+    <!-- This product includes the XR Engine software developed by Niantic Spatial, Inc.
+         Copyright © 2026 Niantic Spatial, Inc. All rights reserved.
+         License: https://github.com/8thwall/engine/blob/main/LICENSE -->
+    <script src="/external/xrextras/xrextras.js" crossorigin="anonymous"></script>
+    <script
+      src="/external/xr/xr.js"
+      async
+      crossorigin="anonymous"
+      data-preload-chunks="slam"
+    ></script>
+  </head>
+  <body>
+    <canvas id="camerafeed" aria-label="AR 카메라 화면"></canvas>
+    <main id="app">
+      <section id="intro" class="panel" aria-labelledby="intro-title">
+        <p class="eyebrow">ABSOLUTE SCALE AR</p>
+        <h1 id="intro-title">실물 크기로<br />가벽을 놓아보세요</h1>
+        <p class="intro-copy">카메라로 바닥을 비춘 뒤 한 번 터치하면 1.5 × 2.3m 가벽이 공간에 고정됩니다.</p>
+        <button id="start-button" type="button">AR 시작</button>
+        <p class="privacy-note">카메라 영상은 기기에서만 처리됩니다.</p>
+      </section>
+
+      <section id="status-card" class="status-card" aria-live="polite" hidden>
+        <span id="status-icon" class="status-icon" aria-hidden="true"></span>
+        <p id="status-message"></p>
+      </section>
+
+      <div id="reticle" aria-hidden="true" hidden><span></span></div>
+
+      <button id="replace-button" class="secondary-button" type="button" hidden>다시 배치</button>
+
+      <section id="error-panel" class="panel error-panel" role="alert" hidden>
+        <p class="eyebrow">AR을 시작할 수 없습니다</p>
+        <h2>카메라와 브라우저를 확인해 주세요</h2>
+        <p id="error-message"></p>
+        <button id="retry-button" type="button">다시 시도</button>
+      </section>
+
+      <pre id="debug-panel" hidden></pre>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

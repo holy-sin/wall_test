@@ -5,20 +5,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>A-Frame: Tap to Place Ground</title>
-  <meta itemprop="name" content="A-Frame: Tap to Place Ground">
-  <meta name="twitter:title" content="A-Frame: Tap to Place Ground">
-  <meta property="og:title" content="A-Frame: Tap to Place Ground">
-  <meta property="og:site_name" content="A-Frame: Tap to Place Ground">
-  <meta name="description" content="This example allows the user to grow cacti 🌵  by tapping or clicking the ground. Showcases raycasting, spawning objects, and importing a 3D model.">
-  <meta itemprop="description" content="This example allows the user to grow cacti 🌵  by tapping or clicking the ground. Showcases raycasting, spawning objects, and importing a 3D model.">
-  <meta property="og:description" content="This example allows the user to grow cacti 🌵  by tapping or clicking the ground. Showcases raycasting, spawning objects, and importing a 3D model.">
-  <meta name="twitter:description" content="This example allows the user to grow cacti 🌵  by tapping or clicking the ground. Showcases raycasting, spawning objects, and importing a 3D model.">
-  <meta property="og:image" content="https://8thwall.org/aframe-world-effects/assets/preview.gif"/>
+  <title>AR 가벽 배치 테스트</title>
+  <meta itemprop="name" content="AR 가벽 배치 테스트">
+  <meta name="twitter:title" content="AR 가벽 배치 테스트">
+  <meta property="og:title" content="AR 가벽 배치 테스트">
+  <meta property="og:site_name" content="AR 가벽 배치 테스트">
+  <meta name="description" content="실제 크기의 테스트용 가벽을 바닥에 배치하는 AR 테스트입니다.">
+  <meta itemprop="description" content="실제 크기의 테스트용 가벽을 바닥에 배치하는 AR 테스트입니다.">
+  <meta property="og:description" content="실제 크기의 테스트용 가벽을 바닥에 배치하는 AR 테스트입니다.">
+  <meta name="twitter:description" content="실제 크기의 테스트용 가벽을 바닥에 배치하는 AR 테스트입니다.">
 
   <script crossorigin="anonymous" src="./external/scripts/8frame-1.5.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@8thwall/xrextras@1/dist/xrextras.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@8thwall/landing-page@1/dist/landing-page.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/coaching-overlay@1/dist/coaching-overlay.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" crossorigin="anonymous" async="true" data-preload-chunks="slam"></script>
 
   <!--!
@@ -38,17 +38,19 @@
 </div>
 
 <div class="over">
-  <span id="promptText">Tap To Place Model</span>
+  <span id="promptText">바닥을 터치해 가벽을 배치하세요</span>
 </div>
 
 <!-- Add the tap-place component to the scene so it has an effect -->
 <a-scene
   tap-place
   landing-page
+  coaching-overlay="promptText: 휴대폰을 앞으로 밀었다가 다시 당겨 주세요;"
   xrextras-runtime-error
   renderer="colorManagement:true"
   xrweb="
     allowedDevices: any;
+    scale: absolute;
     defaultEnvironmentFogIntensity: 0.5; 
     defaultEnvironmentFloorTexture: #groundTex; 
     defaultEnvironmentFloorColor: #FFF;
@@ -59,7 +61,6 @@
   <!-- We can define assets here to be loaded when A-Frame initializes -->
   <a-assets>
     <img id="groundTex" src="assets/sand.jpg">
-    <a-asset-item id="cactusModel" src="assets/cactus.glb"></a-asset-item>
   </a-assets>
 
   <!-- The raycaster will emit mouse events on scene objects specified with the cantap class -->

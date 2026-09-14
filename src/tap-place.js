@@ -1,50 +1,54 @@
-// Component that places cacti where the ground is clicked
+// Component that places one partition where the ground is clicked.
 
 export const tapPlaceComponent = {
-  schema: {
-    min: {default: 6},
-    max: {default: 10},
-  },
   init() {
     const ground = document.getElementById('ground')
+    const camera = document.getElementById('camera')
     this.prompt = document.getElementById('promptText')
-    
-    ground.addEventListener('click', (event) => {
-      // Dismiss the prompt text.
-      this.prompt.style.display = 'none'
-      
-      // Create new entity for the new object
-      const newElement = document.createElement('a-entity')
+    this.partition = null
+    this.cameraPosition = new THREE.Vector3()
 
+    ground.addEventListener('click', (event) => {
       // The raycaster gives a location of the touch in the scene
       const touchPoint = event.detail.intersection.point
-      newElement.setAttribute('position', touchPoint)
 
-      const randomYRotation = Math.random() * 360
-      newElement.setAttribute('rotation', `0 ${randomYRotation} 0`)
-
-      const randomScale = Math.floor(Math.random() * (Math.floor(this.data.max) - Math.ceil(this.data.min)) + Math.ceil(this.data.min))
-
-      newElement.setAttribute('visible', 'false')
-      newElement.setAttribute('scale', '0.0001 0.0001 0.0001')
-
-      newElement.setAttribute('shadow', {
-        receive: false,
-      })
-
-      newElement.setAttribute('gltf-model', '#cactusModel')
-      this.el.sceneEl.appendChild(newElement)
-
-      newElement.addEventListener('model-loaded', () => {
-        // Once the model is loaded, we are ready to show it popping in using an animation
-        newElement.setAttribute('visible', 'true')
-        newElement.setAttribute('animation', {
-          property: 'scale',
-          to: `${randomScale} ${randomScale} ${randomScale}`,
-          easing: 'easeOutElastic',
-          dur: 800,
+      if (!this.partition) {
+        this.partition = document.createElement('a-entity')
+        this.partition.setAttribute('id', 'partition')
+        this.partition.setAttribute('geometry', {
+          primitive: 'box',
+          width: 1.5,
+          height: 2.3,
+          depth: 0.1,
         })
+        this.partition.setAttribute('material', {
+          color: '#d8d8d8',
+          roughness: 0.85,
+          metalness: 0,
+        })
+        this.partition.setAttribute('scale', '1 1 1')
+        this.partition.setAttribute('shadow', {
+          cast: true,
+          receive: false,
+        })
+        this.el.sceneEl.appendChild(this.partition)
+      }
+
+      this.partition.setAttribute('position', {
+        x: touchPoint.x,
+        y: touchPoint.y + 1.15,
+        z: touchPoint.z,
       })
+
+      camera.object3D.getWorldPosition(this.cameraPosition)
+      const yawRadians = Math.atan2(
+        this.cameraPosition.x - touchPoint.x,
+        this.cameraPosition.z - touchPoint.z
+      )
+      const yawDegrees = THREE.MathUtils.radToDeg(yawRadians)
+      this.partition.setAttribute('rotation', `0 ${yawDegrees} 0`)
+
+      this.prompt.textContent = '다른 위치를 터치하면 가벽이 이동합니다'
     })
   },
 }
